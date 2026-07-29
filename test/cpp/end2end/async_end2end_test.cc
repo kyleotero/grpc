@@ -311,6 +311,19 @@ class AsyncEnd2endTest : public ::testing::TestWithParam<TestScenario> {
  protected:
   AsyncEnd2endTest() { GetParam().Log(); }
 
+  // TODO(tjagtap) : [PH2][P3] : Remove once all the PH2 E2E tests are fixed.
+  void EnableLoggingForPH2Tests() {
+    grpc_tracer_set_enabled("http", 1);
+    grpc_tracer_set_enabled("channel", 1);
+    grpc_tracer_set_enabled("subchannel", 1);
+    grpc_tracer_set_enabled("client_channel", 1);
+    grpc_tracer_set_enabled("http2_ph2_transport", 1);
+    grpc_tracer_set_enabled("call", 1);
+    grpc_tracer_set_enabled("call_state", 1);
+    grpc_tracer_set_enabled("promise_primitives", 1);
+    absl::SetGlobalVLogLevel(2);
+  }
+
   void SetUp() override {
     port_ = grpc_pick_unused_port_or_die();
     server_address_ << "localhost:" << port_;
@@ -491,11 +504,13 @@ TEST_P(AsyncEnd2endTest, SimpleRpcWithExpectedError) {
 }
 
 TEST_P(AsyncEnd2endTest, SequentialRpcs) {
+  EnableLoggingForPH2Tests();
   ResetStub();
   SendRpc(10);
 }
 
 TEST_P(AsyncEnd2endTest, ReconnectChannel) {
+  EnableLoggingForPH2Tests();
   SKIP_IF_VIRTUAL();
   // GRPC_CLIENT_CHANNEL_BACKUP_POLL_INTERVAL_MS is set to 100ms in main()
   if (GetParam().inproc) {
@@ -732,6 +747,7 @@ TEST_P(AsyncEnd2endTest, SimpleClientStreamingWithCoalescingApi) {
 
 // One ping, two pongs.
 TEST_P(AsyncEnd2endTest, SimpleServerStreaming) {
+  EnableLoggingForPH2Tests();
   ResetStub();
 
   EchoRequest send_request;
